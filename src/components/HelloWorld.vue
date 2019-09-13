@@ -1,124 +1,140 @@
 <template>
-  <div class="hello">
-    <h1>{{ msg }}</h1>
-    <p>
-      For a guide and recipes on how to configure / customize this project,<br />
-      check out the
-      <a href="https://cli.vuejs.org" target="_blank" rel="noopener"
-        >vue-cli documentation</a
-      >.
-    </p>
-    <h3>Installed CLI Plugins</h3>
-    <ul>
-      <li>
-        <a
-          href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-babel"
-          target="_blank"
-          rel="noopener"
-          >babel</a
+  <div>
+    <div class="container">
+      <div class="rating-wrapper">
+        <div
+          class="box-wrapper"
+          v-for="index in lineNumber"
+          :key="index"
+          @mouseenter="startAnimation(index)"
         >
-      </li>
-      <li>
-        <a
-          href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-typescript"
-          target="_blank"
-          rel="noopener"
-          >typescript</a
-        >
-      </li>
-      <li>
-        <a
-          href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-eslint"
-          target="_blank"
-          rel="noopener"
-          >eslint</a
-        >
-      </li>
-    </ul>
-    <h3>Essential Links</h3>
-    <ul>
-      <li>
-        <a href="https://vuejs.org" target="_blank" rel="noopener">Core Docs</a>
-      </li>
-      <li>
-        <a href="https://forum.vuejs.org" target="_blank" rel="noopener"
-          >Forum</a
-        >
-      </li>
-      <li>
-        <a href="https://chat.vuejs.org" target="_blank" rel="noopener"
-          >Community Chat</a
-        >
-      </li>
-      <li>
-        <a href="https://twitter.com/vuejs" target="_blank" rel="noopener"
-          >Twitter</a
-        >
-      </li>
-      <li>
-        <a href="https://news.vuejs.org" target="_blank" rel="noopener">News</a>
-      </li>
-    </ul>
-    <h3>Ecosystem</h3>
-    <ul>
-      <li>
-        <a href="https://router.vuejs.org" target="_blank" rel="noopener"
-          >vue-router</a
-        >
-      </li>
-      <li>
-        <a href="https://vuex.vuejs.org" target="_blank" rel="noopener">vuex</a>
-      </li>
-      <li>
-        <a
-          href="https://github.com/vuejs/vue-devtools#vue-devtools"
-          target="_blank"
-          rel="noopener"
-          >vue-devtools</a
-        >
-      </li>
-      <li>
-        <a href="https://vue-loader.vuejs.org" target="_blank" rel="noopener"
-          >vue-loader</a
-        >
-      </li>
-      <li>
-        <a
-          href="https://github.com/vuejs/awesome-vue"
-          target="_blank"
-          rel="noopener"
-          >awesome-vue</a
-        >
-      </li>
-    </ul>
+          <div
+            class="box"
+            :class="`box-${index}`"
+            @click="startAnimation(index)"
+            :style="{
+              'background-color': startColor,
+              width: minWidth + 'px',
+              height: minHeight + 'px'
+            }"
+          >
+            {{ index }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="button"></div>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from "vue";
+import { TweenMax, TimelineLite, Power3, Linear } from "gsap/TweenMax";
+import { interpolateRgbBasis, interpolateNumber } from "d3-interpolate";
 
 export default Vue.extend({
-  name: "HelloWorld",
-  props: {
-    msg: String
+  data: function() {
+    return {
+      currentLine: 5,
+      lineNumber: 25,
+      expand: 4,
+      minWidth: 50,
+      maxWidth: 120,
+      minHeight: 6,
+      maxHeight: 18,
+      startColor: "#7fffd4",
+      endColor: "#d87093"
+    };
+  },
+  methods: {
+    startAnimation(midIndex: number) {
+      const tl = new TimelineLite();
+
+      const minIndex = midIndex - this.expand;
+      const maxIndex = midIndex + this.expand;
+      for (let i = minIndex; i <= maxIndex; i++) {
+        tl.to(
+          `.box-${i}`,
+          0.2,
+          {
+            width: this.getWidth(i, midIndex),
+            height: this.getHeight(i, midIndex),
+            backgroundColor: this.getColor(i, midIndex)
+          },
+          0
+        );
+      }
+    },
+
+    startAnimationReset(midIndex: number) {
+      //
+    },
+
+    getWidth(index: number, midIndex: number) {
+      const widthInterpolater = interpolateNumber(this.minWidth, this.maxWidth);
+      const position = (this.expand - Math.abs(index - midIndex)) / this.expand;
+
+      return widthInterpolater(position);
+    },
+
+    getHeight(index: number, midIndex: number) {
+      const heightInterpolater = interpolateNumber(
+        this.minHeight,
+        this.maxHeight
+      );
+      const position = (this.expand - Math.abs(index - midIndex)) / this.expand;
+
+      return heightInterpolater(position);
+    },
+
+    getColor(index: number, midIndex: number) {
+      const colorInterpolater = interpolateRgbBasis([
+        this.startColor,
+        this.endColor
+      ]);
+      const position = (this.expand - Math.abs(index - midIndex)) / this.expand;
+
+      return colorInterpolater(position);
+    }
   }
 });
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
-h3 {
-  margin: 40px 0 0;
+<style>
+.container {
+  display: flex;
+  flex-direction: column;
 }
-ul {
-  list-style-type: none;
-  padding: 0;
+
+.rating-wrapper {
+  width: 250px;
+  border: 1px solid grey;
 }
-li {
-  display: inline-block;
-  margin: 0 10px;
+
+.box-wrapper {
+  width: 200px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  border: 1px solid lightgray;
 }
-a {
-  color: #42b983;
+
+.box {
+  margin: 5px 0px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.button {
+  background-color: #7fffd4;
+  border-radius: 100px;
+  width: 36px;
+  height: 36px;
+  position: fixed;
+  bottom: 36px;
+  left: 50%;
+  transform: translateX(-50%);
 }
 </style>
