@@ -29,7 +29,12 @@
       class="rating-button"
       @touchstart="startAnimationLoop"
       @touchend="onTouchEnd($event)"
+      @touchmove="onTouchMove($event)"
     ></div>
+
+    <div v-if="showHelpHint" class="help-hint">
+      松开，取消打分
+    </div>
   </div>
 </template>
 
@@ -49,10 +54,12 @@ export default Vue.extend({
       minHeight: 4,
       maxHeight: 12,
       startColor: "#7fffd4",
-      endColor: "#d87093",
+      endColor: "#ec598a",
       loopId: 0,
       midIndex: 26,
-      realtimeScoresTl: {} as any
+      realtimeScoresTl: {} as any,
+      showHelpHint: false,
+      canRating: true
     };
   },
   methods: {
@@ -128,7 +135,7 @@ export default Vue.extend({
     },
 
     startAnimationLoop() {
-      console.log("TCL: startAnimationLoop -> startAnimationLoop");
+      if (!this.canRating) return;
 
       this.startRealtimeScoresLoop();
 
@@ -173,6 +180,7 @@ export default Vue.extend({
           0.25
         );
     },
+
     stopRealtimeScores() {
       this.realtimeScoresTl.kill();
     },
@@ -188,14 +196,16 @@ export default Vue.extend({
           opacity: 0
         },
         0
-      ).to(`.realtime-scores`, 0.2, {
+      ).to(`.realtime-scores`, 0, {
         top: "auto",
         ease: Linear.easeNone
       });
     },
 
     onTouchEnd(event: TouchEvent) {
-      console.log("TCL: event", event);
+      if (!this.canRating) return;
+
+      this.canRating = false;
 
       let elementUnderTouchEnd;
 
@@ -203,10 +213,6 @@ export default Vue.extend({
         elementUnderTouchEnd = document.elementFromPoint(
           (event as any).changedTouches.item(0).clientX,
           (event as any).changedTouches.item(0).clientY
-        );
-        console.log(
-          "TCL: onTouchEnd -> elementUnderTouchEnd",
-          elementUnderTouchEnd
         );
       }
 
@@ -219,11 +225,37 @@ export default Vue.extend({
         this.stopRealtimeScores();
         setTimeout(() => {
           this.resetRealtimeScores();
-        }, 1000);
+          this.canRating = true;
+        }, 500);
       } else {
         this.reset();
         this.stopRealtimeScores();
         this.resetRealtimeScores();
+        this.canRating = true;
+      }
+
+      this.showHelpHint = false;
+    },
+
+    onTouchMove(event: TouchEvent) {
+      if (!this.canRating) return;
+
+      let elementUnderTouchMove;
+
+      if (event && event.changedTouches && event.changedTouches.item(0)) {
+        elementUnderTouchMove = document.elementFromPoint(
+          (event as any).changedTouches.item(0).clientX,
+          (event as any).changedTouches.item(0).clientY
+        );
+      }
+
+      const ratingButton = document.querySelector(".rating-button");
+
+      if (elementUnderTouchMove === ratingButton) {
+        this.showHelpHint = true;
+        this.showHelpHint = false;
+      } else {
+        this.showHelpHint = true;
       }
     }
   }
@@ -233,6 +265,9 @@ export default Vue.extend({
 <style scoped>
 .wrapper {
   height: 100%;
+  /* background-color: rgb(231, 231, 231); */
+  background-color: rgb(80, 80, 80);
+  /* color: white; */
 }
 
 .container {
@@ -242,19 +277,19 @@ export default Vue.extend({
 .rating-wrapper {
   position: absolute;
   top: 50%;
-  width: 128px;
-  border: 1px solid grey;
+  width: 156px;
+  /* border: 1px solid grey; */
   display: flex;
   flex-direction: column;
   transform: translateY(-50%);
 }
 
 .box-wrapper {
-  width: 128px;
+  width: 156px;
   height: 18px;
   display: flex;
   align-items: center;
-  border: 1px solid lightgray;
+  /* border: 1px solid lightgray; */
 }
 
 .box {
@@ -266,6 +301,7 @@ export default Vue.extend({
 .rating-button {
   background-color: #7fffd4;
   border-radius: 100px;
+  border: 4px solid rgb(226, 255, 245);
   width: 56px;
   height: 56px;
   position: fixed;
@@ -279,12 +315,23 @@ export default Vue.extend({
   position: absolute;
   bottom: -8px;
   right: 0px;
-  width: 64px;
-  height: 36px;
+  width: 84px;
+  height: 48px;
   border-radius: 100px;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 18px;
+  font-size: 22px;
+  opacity: 0;
+}
+
+.help-hint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  background-color: aquamarine;
+  border-radius: 8px;
+  padding: 24px;
 }
 </style>
